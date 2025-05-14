@@ -1,0 +1,28 @@
+equation/equation.py
+equation/Quadratic.py
+excel/File.xlsx
+excel/ReadExcel.py
+gui/gui0.py
+gui/gui1.py
+gui/gui2.py
+gui/gui3.py
+gui/gui4.py
+gui/gui5.py
+IFC Project/BIM-Krekova2_v4_Acad28.ifc
+IFC Project/__pycache__/controller.cpython-312.pyc
+IFC Project/__pycache__/model.cpython-312.pyc
+IFC Project/__pycache__/view.cpython-312.pyc
+IFC Project/MVC project/__pycache__/controller.cpython-312.pyc
+IFC Project/MVC project/__pycache__/model.cpython-312.pyc
+IFC Project/MVC project/__pycache__/view.cpython-312.pyc
+loops/LoopFor.py
+loops/LoopWhile.py
+personCar/__init__.py
+personCar/app.py
+personCar/car.py
+personCar/person.py
+personCar/utility.py
+personCar/__pycache__/__init__.cpython-310.pyc
+personCar/__pycache__/car.cpython-310.pyc
+personCar/__pycache__/person.cpython-310.pyc
+personCar/__pycache__/utility.cpython-310.pyc
