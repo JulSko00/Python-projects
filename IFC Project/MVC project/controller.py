@@ -25,3 +25,4 @@ class IfcController:
         walls = self.model.get_walls()
         schema = self.model.get_schema()
         self.view.display_walls(walls, schema)
+        

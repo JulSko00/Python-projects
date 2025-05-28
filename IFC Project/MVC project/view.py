@@ -43,7 +43,7 @@ class IfcView:
         """Enable or disable the Find Walls button."""
         state = "normal" if enable else "disabled"
         self.find_walls_button.config(state=state)
-    
+
     def display_walls(self, walls, schema):
         """Prepare and display wall data in the console."""
         if walls is None or schema is None:
@@ -79,10 +79,10 @@ class IfcView:
                     output.append(f"Location: X={coords[0]}, Y={coords[1]}, Z={coords[2]}")
             
             output.append("-" * 50)
-        
+
         # Add the final wall count
         output.append(f"\nTotal number of walls: {wall_count}")
-        
+    
         # Print the entire output
         print("\n".join(output))
         self.result_label.config(text=f"Total number of walls: {len(walls) if walls else 0}")
