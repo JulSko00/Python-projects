@@ -86,186 +86,6 @@ class IfcModel:
             window_data.append(window_info)
         return window_data
 
-    def get_spaces(self):
-        """Retrieve spaces and calculate net floor area (floor area minus wall footprint)."""
-        ifc_file = self.open_ifc_file()
-        if ifc_file is None:
-            print("Nie można otworzyć pliku IFC.")
-            return None
-        spaces = ifc_file.by_type("IfcSpace")
-        print(f"Liczba pomieszczeń: {len(spaces)}")
-        space_data = []
-
-        for space in spaces:
-            # Get floor area from properties
-            floor_area = None
-            for rel in getattr(space, "IsDefinedBy", []):
-                if rel.is_a("IfcRelDefinesByProperties"):
-                    property_set = rel.RelatingPropertyDefinition
-                    if hasattr(property_set, "HasProperties"):
-                        for prop in property_set.HasProperties:
-                            if prop.Name in ["NetFloorArea", "GrossFloorArea", "Area"]:
-                                if hasattr(prop, "NominalValue") and prop.NominalValue:
-                                    floor_area = prop.NominalValue.wrappedValue
-                                    print(f"Pomieszczenie {space.id()}: Znaleziono powierzchnię {prop.Name} = {floor_area}")
-                                    break
-                        if floor_area is not None:
-                            break
-
-            # Backup: estimate floor area from geometry
-            if floor_area is None and space.Representation:
-                for rep in space.Representation.Representations:
-                    if rep.RepresentationType in ["SweptSolid", "Polygon"]:
-                        for item in rep.Items:
-                            if item.is_a("IfcExtrudedAreaSolid"):
-                                profile = item.SweptArea
-                                if profile.is_a("IfcRectangleProfileDef"):
-                                    floor_area = profile.XDim * profile.YDim
-                                    print(f"Pomieszczenie {space.id()}: Powierzchnia z geometrii = {floor_area}")
-                                    break
-                        if floor_area is not None:
-                            break
-
-            # Get walls intersecting the space via IfcRelSpaceBoundary
-            wall_area = 0.0
-            for rel in getattr(space, "BoundedBy", []):
-                if rel.is_a("IfcRelSpaceBoundary") and rel.RelatedBuildingElement and rel.RelatedBuildingElement.is_a("IfcWall"):
-                    wall = rel.RelatedBuildingElement
-                    if wall.Representation:
-                        for rep in wall.Representation.Representations:
-                            if rep.RepresentationType == "SweptSolid":
-                                for item in rep.Items:
-                                    if item.is_a("IfcExtrudedAreaSolid"):
-                                        profile = item.SweptArea
-                                        if profile.is_a("IfcRectangleProfileDef"):
-                                            length = profile.XDim
-                                            thickness = profile.YDim
-                                            wall_area += length * thickness
-                                            print(f"Ściana w pomieszczeniu {space.id()}: długość={length}, grubość={thickness}, pole={length*thickness}")
-
-            # Convert units if necessary (assuming IFC file uses meters; adjust if needed)
-            if floor_area is not None:
-                # Example: convert mm² to m² if file uses millimeters
-                if floor_area > 1000:  # Heuristic to detect if area is in mm²
-                    floor_area /= 1_000_000
-                    print(f"Pomieszczenie {space.id()}: Powierzchnia skonwertowana na m²: {floor_area}")
-                if wall_area > 1000:  # Heuristic to detect if wall area is in mm²
-                    wall_area /= 1_000_000
-                    print(f"Pomieszczenie {space.id()}: Powierzchnia ścian skonwertowana na m²: {wall_area}")
-
-            # Calculate net floor area
-            net_area = floor_area - wall_area if floor_area is not None and wall_area is not None else None
-            if isinstance(net_area, float) and net_area < 0:
-                net_area = 0.0  # Prevent negative area
-                print(f"Pomieszczenie {space.id()}: Powierzchnia netto ustawiona na 0 (była ujemna)")
-
-            space_data.append({
-                "id": space.id(),
-                "name": space.Name if space.Name else "Unnamed",
-                "net_area": net_area if net_area is not None else "N/A"
-            })
-            print(f"Pomieszczenie {space.id()}: Powierzchnia netto = {net_area}")
-
-        return space_data
-
-    def get_space_volumes(self):
-        """Calculate volume as net floor area times ceiling height."""
-        ifc_file = self.open_ifc_file()
-        if ifc_file is None:
-            print("Nie można otworzyć pliku IFC.")
-            return None
-        spaces = ifc_file.by_type("IfcSpace")
-        print(f"Liczba pomieszczeń (dla objętości): {len(spaces)}")
-        volume_data = []
-
-        for space in spaces:
-            # Get net floor area
-            net_area = None
-            for rel in getattr(space, "IsDefinedBy", []):
-                if rel.is_a("IfcRelDefinesByProperties"):
-                    property_set = rel.RelatingPropertyDefinition
-                    if hasattr(property_set, "HasProperties"):
-                        for prop in property_set.HasProperties:
-                            if prop.Name in ["NetFloorArea", "GrossFloorArea", "Area"]:
-                                if hasattr(prop, "NominalValue") and prop.NominalValue:
-                                    net_area = prop.NominalValue.wrappedValue
-                                    print(f"Pomieszczenie {space.id()}: Powierzchnia netto = {net_area}")
-                                    break
-                        if net_area is not None:
-                            break
-
-            wall_area = 0.0
-            for rel in getattr(space, "BoundedBy", []):
-                if rel.is_a("IfcRelSpaceBoundary") and rel.RelatedBuildingElement and rel.RelatedBuildingElement.is_a("IfcWall"):
-                    wall = rel.RelatedBuildingElement
-                    if wall.Representation:
-                        for rep in wall.Representation.Representations:
-                            if rep.RepresentationType == "SweptSolid":
-                                for item in rep.Items:
-                                    if item.is_a("IfcExtrudedAreaSolid"):
-                                        profile = item.SweptArea
-                                        if profile.is_a("IfcRectangleProfileDef"):
-                                            length = profile.XDim
-                                            thickness = profile.YDim
-                                            wall_area += length * thickness
-                                            print(f"Ściana w pomieszczeniu {space.id()}: długość={length}, grubość={thickness}, pole={length*thickness}")
-
-            if net_area is not None:
-                if net_area > 1000:  # Convert mm² to m² if necessary
-                    net_area /= 1_000_000
-                    print(f"Pomieszczenie {space.id()}: Powierzchnia netto skonwertowana na m²: {net_area}")
-                if wall_area > 1000:  # Convert mm² to m² if necessary
-                    wall_area /= 1_000_000
-                    print(f"Pomieszczenie {space.id()}: Powierzchnia ścian skonwertowana na m²: {wall_area}")
-                net_area = net_area - wall_area if wall_area is not None else net_area
-                if net_area < 0:
-                    net_area = 0.0
-                    print(f"Pomieszczenie {space.id()}: Powierzchnia netto ustawiona na 0 (była ujemna)")
-
-            # Get ceiling height
-            height = None
-            for rel in getattr(space, "IsDefinedBy", []):
-                if rel.is_a("IfcRelDefinesByProperties"):
-                    property_set = rel.RelatingPropertyDefinition
-                    if hasattr(property_set, "HasProperties"):
-                        for prop in property_set.HasProperties:
-                            if prop.Name in ["NetCeilingHeight", "Height", "GrossCeilingHeight"]:
-                                if hasattr(prop, "NominalValue") and prop.NominalValue:
-                                    height = prop.NominalValue.wrappedValue
-                                    print(f"Pomieszczenie {space.id()}: Wysokość = {height}")
-                                    break
-                        if height is not None:
-                            break
-
-            # Backup: estimate height from geometry
-            if height is None and space.Representation:
-                for rep in space.Representation.Representations:
-                    if rep.RepresentationType in ["SweptSolid", "Polygon"]:
-                        for item in rep.Items:
-                            if item.is_a("IfcExtrudedAreaSolid"):
-                                height = item.Depth
-                                print(f"Pomieszczenie {space.id()}: Wysokość z geometrii = {height}")
-                                break
-                        if height is not None:
-                            break
-
-            # Convert height if necessary (e.g., mm to m)
-            if height is not None and height > 100:  # Heuristic to detect if height is in mm
-                height /= 1000
-                print(f"Pomieszczenie {space.id()}: Wysokość skonwertowana na m: {height}")
-
-            # Calculate volume
-            volume = net_area * height if net_area is not None and height is not None else "N/A"
-            print(f"Pomieszczenie {space.id()}: net_area={net_area}, height={height}, volume={volume}")
-
-            volume_data.append({
-                "id": space.id(),
-                "name": space.Name if space.Name else "Unnamed",
-                "volume": volume
-            })
-
-        return volume_data
-
 # View
 class IfcView:
     def __init__(self, root, controller):
@@ -316,24 +136,6 @@ class IfcView:
         )
         self.find_windows_button.pack(pady=5)
         
-        # Calculate Net Floor Area button
-        self.area_report_button = tk.Button(
-            self.root,
-            text="Calculate Net Floor Area",
-            command=self.controller.on_generate_area_report_click,
-            state="disabled"
-        )
-        self.area_report_button.pack(pady=5)
-        
-        # Calculate Volume button
-        self.volumes_button = tk.Button(
-            self.root,
-            text="Calculate Volume",
-            command=self.controller.on_calculate_volumes_click,
-            state="disabled"
-        )
-        self.volumes_button.pack(pady=5)
-        
         self.result_label = tk.Label(self.root, text="", font=("Arial", 14))
         self.result_label.pack(pady=10)
     
@@ -356,16 +158,6 @@ class IfcView:
         """Enable or disable the Find Windows button."""
         state = "normal" if enable else "disabled"
         self.find_windows_button.config(state=state)
-    
-    def enable_area_report_button(self, enable=True):
-        """Enable or disable the Calculate Net Floor Area button."""
-        state = "normal" if enable else "disabled"
-        self.area_report_button.config(state=state)
-    
-    def enable_volumes_button(self, enable=True):
-        """Enable or disable the Calculate Volume button."""
-        state = "normal" if enable else "disabled"
-        self.volumes_button.config(state=state)
     
     def display_walls(self, walls, schema):
         """Prepare and display wall data in the console."""
@@ -420,22 +212,6 @@ class IfcView:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
-    
-    def display_area_report(self, spaces):
-        """Display number of spaces with net floor area in the main window."""
-        if spaces is None:
-            self.result_label.config(text="No file selected or file could not be opened.")
-            return
-        net_total = sum(s['net_area'] for s in spaces if isinstance(s['net_area'], (int, float)) and s['net_area'] is not None)
-        self.result_label.config(text=f"Powierzchnia użytkowa łączna: {net_total:.2f} m²")
-    
-    def display_volumes(self, volumes):
-        """Display number of spaces with volume in the main window."""
-        if volumes is None:
-            self.result_label.config(text="No file selected or file could not be opened.")
-            return
-        vol_total = sum(v['volume'] for v in volumes if isinstance(v['volume'], (int, float)) and v['volume'] is not None)
-        self.result_label.config(text=f"Kubatura łączna: {vol_total:.2f} m³")
 
 # Controller
 class IfcController:
@@ -456,14 +232,10 @@ class IfcController:
             self.view.enable_find_walls_button(True)
             self.view.enable_find_doors_button(True)
             self.view.enable_find_windows_button(True)
-            self.view.enable_area_report_button(True)
-            self.view.enable_volumes_button(True)
         else:
             self.view.enable_find_walls_button(False)
             self.view.enable_find_doors_button(False)
             self.view.enable_find_windows_button(False)
-            self.view.enable_area_report_button(False)
-            self.view.enable_volumes_button(False)
     
     def on_find_walls_click(self):
         """Handle the Find Walls button click."""
@@ -480,16 +252,6 @@ class IfcController:
         """Handle the Find Windows button click."""
         windows = self.model.get_windows()
         self.view.display_windows(windows)
-    
-    def on_generate_area_report_click(self):
-        """Handle the Calculate Net Floor Area button click."""
-        spaces = self.model.get_spaces()
-        self.view.display_area_report(spaces)
-    
-    def on_calculate_volumes_click(self):
-        """Handle the Calculate Volume button click."""
-        volumes = self.model.get_space_volumes()
-        self.view.display_volumes(volumes)
 
 # Main Application
 def main():
