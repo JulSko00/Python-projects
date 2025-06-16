@@ -308,6 +308,41 @@ class IfcView:
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
 
+    def display_space_areas(self, spaces):
+        """Display number of spaces with areas in the main window and console."""
+        if spaces is None:
+            self.result_label.config(text="No file selected or file could not be opened.")
+            return
+        output = [f"Total number of spaces with areas: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Area: {space['area']} m²")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with areas: {len(spaces)}")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total number of spaces with areas: {len(spaces)}")
+    
+    def display_space_volumes(self, spaces):
+        """Display number of spaces with volumes in the main window and console."""
+        if spaces is None:
+            self.result_label.config(text="No file selected or file could not be opened.")
+            return
+        output = [f"Total number of spaces with volumes: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Area: {space['area']} m²")
+            output.append(f"Height: {space['height']} m")
+            output.append(f"Volume: {space['volume']} m³")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with volumes: {len(spaces)}")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total number of spaces with volumes: {len(spaces)}")
+
+
 # Controller
 class IfcController:
     def __init__(self, model, view):
