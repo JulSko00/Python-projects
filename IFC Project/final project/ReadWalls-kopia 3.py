@@ -362,10 +362,14 @@ class IfcController:
             self.view.enable_find_walls_button(True)
             self.view.enable_find_doors_button(True)
             self.view.enable_find_windows_button(True)
+            self.view.enable_find_space_areas_button(True)
+            self.view.enable_find_space_volumes_button(True)
         else:
             self.view.enable_find_walls_button(False)
             self.view.enable_find_doors_button(False)
             self.view.enable_find_windows_button(False)
+            self.view.enable_find_space_areas_button(False)
+            self.view.enable_find_space_volumes_button(False)
     
     def on_find_walls_click(self):
         """Handle the Find Walls button click."""
@@ -382,6 +386,16 @@ class IfcController:
         """Handle the Find Windows button click."""
         windows = self.model.get_windows()
         self.view.display_windows(windows)
+    
+    def on_find_space_areas_click(self):
+        """Handle the Find Space Areas button click."""
+        spaces = self.model.get_space_areas()
+        self.view.display_space_areas(spaces)
+    
+    def on_find_space_volumes_click(self):
+        """Handle the Find Space Volumes button click."""
+        spaces = self.model.get_space_volumes()
+        self.view.display_space_volumes(spaces)
 
 # Main Application
 def main():
