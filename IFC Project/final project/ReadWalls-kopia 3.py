@@ -202,6 +202,24 @@ class IfcView:
             state="disabled"
         )
         self.find_windows_button.pack(pady=5)
+
+        # Find Space Areas button
+        self.find_space_areas_button = tk.Button(
+            self.root,
+            text="Find Space Areas",
+            command=self.controller.on_find_space_areas_click,
+            state="disabled"
+        )
+        self.find_space_areas_button.pack(pady=5)
+        
+        # Find Space Volumes button
+        self.find_space_volumes_button = tk.Button(
+            self.root,
+            text="Find Space Volumes",
+            command=self.controller.on_find_space_volumes_click,
+            state="disabled"
+        )
+        self.find_space_volumes_button.pack(pady=5)
         
         self.result_label = tk.Label(self.root, text="", font=("Arial", 14))
         self.result_label.pack(pady=10)
