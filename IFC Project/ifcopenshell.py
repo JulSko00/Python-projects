@@ -85,7 +85,7 @@ class IfcModel:
             print(f"Window: {window_info}")
             window_data.append(window_info)
         return window_data
-    
+
     def get_space_areas(self):
         """Retrieve spaces from the IFC file and return their area data."""
         ifc_file = self.open_ifc_file()
@@ -203,6 +203,24 @@ class IfcView:
         )
         self.find_windows_button.pack(pady=5)
         
+        # Find Space Areas button
+        self.find_space_areas_button = tk.Button(
+            self.root,
+            text="Find Space Areas",
+            command=self.controller.on_find_space_areas_click,
+            state="disabled"
+        )
+        self.find_space_areas_button.pack(pady=5)
+        
+        # Find Space Volumes button
+        self.find_space_volumes_button = tk.Button(
+            self.root,
+            text="Find Space Volumes",
+            command=self.controller.on_find_space_volumes_click,
+            state="disabled"
+        )
+        self.find_space_volumes_button.pack(pady=5)
+        
         self.result_label = tk.Label(self.root, text="", font=("Arial", 14))
         self.result_label.pack(pady=10)
     
@@ -225,6 +243,16 @@ class IfcView:
         """Enable or disable the Find Windows button."""
         state = "normal" if enable else "disabled"
         self.find_windows_button.config(state=state)
+    
+    def enable_find_space_areas_button(self, enable=True):
+        """Enable or disable the Find Space Areas button."""
+        state = "normal" if enable else "disabled"
+        self.find_space_areas_button.config(state=state)
+    
+    def enable_find_space_volumes_button(self, enable=True):
+        """Enable or disable the Find Space Volumes button."""
+        state = "normal" if enable else "disabled"
+        self.find_space_volumes_button.config(state=state)
     
     def display_walls(self, walls, schema):
         """Prepare and display wall data in the console."""
@@ -279,6 +307,40 @@ class IfcView:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
+    
+    def display_space_areas(self, spaces):
+        """Display number of spaces with areas in the main window and console."""
+        if spaces is None:
+            self.result_label.config(text="No file selected or file could not be opened.")
+            return
+        output = [f"Total number of spaces with areas: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Area: {space['area']} m²")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with areas: {len(spaces)}")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total number of spaces with areas: {len(spaces)}")
+    
+    def display_space_volumes(self, spaces):
+        """Display number of spaces with volumes in the main window and console."""
+        if spaces is None:
+            self.result_label.config(text="No file selected or file could not be opened.")
+            return
+        output = [f"Total number of spaces with volumes: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Area: {space['area']} m²")
+            output.append(f"Height: {space['height']} m")
+            output.append(f"Volume: {space['volume']} m³")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with volumes: {len(spaces)}")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total number of spaces with volumes: {len(spaces)}")
 
 # Controller
 class IfcController:
@@ -299,10 +361,14 @@ class IfcController:
             self.view.enable_find_walls_button(True)
             self.view.enable_find_doors_button(True)
             self.view.enable_find_windows_button(True)
+            self.view.enable_find_space_areas_button(True)
+            self.view.enable_find_space_volumes_button(True)
         else:
             self.view.enable_find_walls_button(False)
             self.view.enable_find_doors_button(False)
             self.view.enable_find_windows_button(False)
+            self.view.enable_find_space_areas_button(False)
+            self.view.enable_find_space_volumes_button(False)
     
     def on_find_walls_click(self):
         """Handle the Find Walls button click."""
@@ -319,6 +385,16 @@ class IfcController:
         """Handle the Find Windows button click."""
         windows = self.model.get_windows()
         self.view.display_windows(windows)
+    
+    def on_find_space_areas_click(self):
+        """Handle the Find Space Areas button click."""
+        spaces = self.model.get_space_areas()
+        self.view.display_space_areas(spaces)
+    
+    def on_find_space_volumes_click(self):
+        """Handle the Find Space Volumes button click."""
+        spaces = self.model.get_space_volumes()
+        self.view.display_space_volumes(spaces)
 
 # Main Application
 def main():
