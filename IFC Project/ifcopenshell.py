@@ -87,13 +87,14 @@ class IfcModel:
         return window_data
 
     def get_space_areas(self):
-        """Retrieve spaces from the IFC file and return their area data."""
+        """Retrieve spaces from the IFC file and return their area data with total area."""
         ifc_file = self.open_ifc_file()
         if ifc_file is None:
             return None
         spaces = ifc_file.by_type("IfcSpace")
         print(f"Number of spaces: {len(spaces)}")
         space_data = []
+        total_area = 0.0
         for space in spaces:
             area = "N/A"
             # Look for area in property sets
@@ -105,6 +106,8 @@ class IfcModel:
                             for prop in property_set.HasProperties:
                                 if prop.Name == "NetFloorArea" and hasattr(prop, "NominalValue"):
                                     area = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
+                                    if isinstance(area, (int, float)):
+                                        total_area += area
             space_info = {
                 "id": space.id(),
                 "global_id": space.GlobalId,
@@ -113,7 +116,7 @@ class IfcModel:
             }
             print(f"Space Area: {space_info}")
             space_data.append(space_info)
-        return space_data
+        return {"spaces": space_data, "total_area": total_area}
 
     def get_space_volumes(self):
         """Retrieve spaces from the IFC file and return their volume data."""
@@ -308,11 +311,13 @@ class IfcView:
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
     
-    def display_space_areas(self, spaces):
-        """Display number of spaces with areas in the main window and console."""
-        if spaces is None:
+    def display_space_areas(self, data):
+        """Display number of spaces with areas and total area in the main window and console."""
+        if data is None or "spaces" not in data:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
+        spaces = data["spaces"]
+        total_area = data["total_area"]
         output = [f"Total number of spaces with areas: {len(spaces)}\n"]
         for space in spaces:
             output.append(f"Space ID: {space['id']}")
@@ -321,8 +326,9 @@ class IfcView:
             output.append(f"Area: {space['area']} m²")
             output.append("-" * 50)
         output.append(f"\nTotal number of spaces with areas: {len(spaces)}")
+        output.append(f"Total area of spaces: {total_area:.2f} m²")
         print("\n".join(output))
-        self.result_label.config(text=f"Total number of spaces with areas: {len(spaces)}")
+        self.result_label.config(text=f"Total number of spaces with areas: {len(spaces)}, Total area: {total_area:.2f} m²")
     
     def display_space_volumes(self, spaces):
         """Display number of spaces with volumes in the main window and console."""
@@ -388,8 +394,8 @@ class IfcController:
     
     def on_find_space_areas_click(self):
         """Handle the Find Space Areas button click."""
-        spaces = self.model.get_space_areas()
-        self.view.display_space_areas(spaces)
+        data = self.model.get_space_areas()
+        self.view.display_space_areas(data)
     
     def on_find_space_volumes_click(self):
         """Handle the Find Space Volumes button click."""
