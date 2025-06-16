@@ -244,6 +244,16 @@ class IfcView:
         state = "normal" if enable else "disabled"
         self.find_windows_button.config(state=state)
     
+    def enable_find_space_areas_button(self, enable=True):
+        """Enable or disable the Find Space Areas button."""
+        state = "normal" if enable else "disabled"
+        self.find_space_areas_button.config(state=state)
+    
+    def enable_find_space_volumes_button(self, enable=True):
+        """Enable or disable the Find Space Volumes button."""
+        state = "normal" if enable else "disabled"
+        self.find_space_volumes_button.config(state=state)
+    
     def display_walls(self, walls, schema):
         """Prepare and display wall data in the console."""
         if walls is None or schema is None:
