@@ -16,18 +16,18 @@ class IfcModel:
     def open_ifc_file(self):
         """Open the IFC file and return it, or None if it fails."""
         if not self.file_path:
-            print("Brak ścieżki do pliku IFC")
+            print("No path to the IFC file")
             return None
-        print(f"Próba otwarcia pliku: {self.file_path}")
+        print(f"Attempting to open the file: {self.file_path}")
         try:
             self.ifc_file = ifcopenshell.open(self.file_path)
-            print("Plik IFC otwarty pomyślnie")
+            print("IFC file opened successfully")
             return self.ifc_file
         except FileNotFoundError:
-            print("Plik IFC nie znaleziony")
+            print("IFC file not found")
             return None
         except Exception as e:
-            print(f"Wystąpił błąd podczas otwierania pliku: {str(e)}")
+            print(f"An error occurred while opening the file: {str(e)}")
             return None
 
     def get_walls(self):
@@ -36,7 +36,7 @@ class IfcModel:
         if ifc_file is None:
             return None
         walls = ifc_file.by_type("IfcWall")
-        print(f"Liczba ścian: {len(walls)}")
+        print(f"Number of walls: {len(walls)}")
         return walls
 
     def get_schema(self):
@@ -52,7 +52,7 @@ class IfcModel:
         if ifc_file is None:
             return None
         doors = ifc_file.by_type("IfcDoor")
-        print(f"Liczba drzwi: {len(doors)}")
+        print(f"Number of doors: {len(doors)}")
         door_data = []
         for door in doors:
             door_info = {
@@ -62,7 +62,7 @@ class IfcModel:
                 "width": door.OverallWidth if hasattr(door, "OverallWidth") else "N/A",
                 "height": door.OverallHeight if hasattr(door, "OverallHeight") else "N/A"
             }
-            print(f"Drzwi: {door_info}")
+            print(f"Doors: {door_info}")
             door_data.append(door_info)
         return door_data
 
@@ -72,7 +72,7 @@ class IfcModel:
         if ifc_file is None:
             return None
         windows = ifc_file.by_type("IfcWindow")
-        print(f"Liczba okien: {len(windows)}")
+        print(f"Number of windows: {len(windows)}")
         window_data = []
         for window in windows:
             window_info = {
@@ -82,7 +82,7 @@ class IfcModel:
                 "width": window.OverallWidth if hasattr(window, "OverallWidth") else "N/A",
                 "height": window.OverallHeight if hasattr(window, "OverallHeight") else "N/A"
             }
-            print(f"Okno: {window_info}")
+            print(f"Window: {window_info}")
             window_data.append(window_info)
         return window_data
 
