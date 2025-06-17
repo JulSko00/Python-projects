@@ -1,6 +1,5 @@
 import tkinter as tk
 
-# View
 class IfcView:
     def __init__(self, root, controller):
         self.root = root
@@ -49,24 +48,33 @@ class IfcView:
             state="disabled"
         )
         self.find_windows_button.pack(pady=5)
-        
-        # Calculate Net Floor Area button
-        self.area_report_button = tk.Button(
+
+        # Find Space Areas button
+        self.find_space_areas_button = tk.Button(
             self.root,
-            text="Calculate Net Floor Area",
-            command=self.controller.on_generate_area_report_click,
+            text="Find Space Areas",
+            command=self.controller.on_find_space_areas_click,
             state="disabled"
         )
-        self.area_report_button.pack(pady=5)
+        self.find_space_areas_button.pack(pady=5)
         
-        # Calculate Volume button
-        self.volumes_button = tk.Button(
+        # Find Space Volumes button
+        self.find_space_volumes_button = tk.Button(
             self.root,
-            text="Calculate Volume",
-            command=self.controller.on_calculate_volumes_click,
+            text="Find Space Volumes",
+            command=self.controller.on_find_space_volumes_click,
             state="disabled"
         )
-        self.volumes_button.pack(pady=5)
+        self.find_space_volumes_button.pack(pady=5)
+
+        # Solar Gain Calculation Button
+        self.calc_solar_gain_button = tk.Button(
+            self.root,
+            text="Calculate daily solar heat gain",
+            command=self.controller.on_calc_solar_gain_click,
+            state="disabled"
+        )
+        self.calc_solar_gain_button.pack(pady=5)
         
         self.result_label = tk.Label(self.root, text="", font=("Arial", 14))
         self.result_label.pack(pady=10)
@@ -91,15 +99,20 @@ class IfcView:
         state = "normal" if enable else "disabled"
         self.find_windows_button.config(state=state)
     
-    def enable_area_report_button(self, enable=True):
-        """Enable or disable the Calculate Net Floor Area button."""
+    def enable_find_space_areas_button(self, enable=True):
+        """Enable or disable the Find Space Areas button."""
         state = "normal" if enable else "disabled"
-        self.area_report_button.config(state=state)
+        self.find_space_areas_button.config(state=state)
     
-    def enable_volumes_button(self, enable=True):
-        """Enable or disable the Calculate Volume button."""
+    def enable_find_space_volumes_button(self, enable=True):
+        """Enable or disable the Find Space Volumes button."""
         state = "normal" if enable else "disabled"
-        self.volumes_button.config(state=state)
+        self.find_space_volumes_button.config(state=state)
+
+    def enable_calc_solar_gain_button(self, enable=True):
+        """Enable or disable the Solar Gain Calculation button."""
+        state = "normal" if enable else "disabled"
+        self.calc_solar_gain_button.config(state=state)
     
     def display_walls(self, walls, schema):
         """Prepare and display wall data in the console."""
@@ -154,19 +167,41 @@ class IfcView:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
-    
-    def display_area_report(self, spaces):
-        """Display number of spaces with net floor area in the main window."""
-        if spaces is None:
+
+    def display_space_areas(self, data):
+        """Display number of spaces with areas in the main window and console."""
+        if data is None or "spaces" not in data:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
-        net_total = sum(s['net_area'] for s in spaces if isinstance(s['net_area'], (int, float)) and s['net_area'] is not None)
-        self.result_label.config(text=f"Powierzchnia użytkowa łączna: {net_total:.2f} m²")
+        spaces = data["spaces"]
+        total_area = data["total_area"]
+        output = [f"Total number of spaces with areas: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Area: {space['area']} m²")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with areas: {len(spaces)}")
+        output.append(f"Total area of spaces: {total_area:.2f} m²")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total area of spaces: {total_area:.2f} m²")
     
-    def display_volumes(self, volumes):
-        """Display number of spaces with volume in the main window."""
-        if volumes is None:
+    def display_space_volumes(self, data):
+        """Display number of spaces with volumes in the main window and console."""
+        if data is None or "spaces" not in data:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
-        vol_total = sum(v['volume'] for v in volumes if isinstance(v['volume'], (int, float)) and v['volume'] is not None)
-        self.result_label.config(text=f"Kubatura łączna: {vol_total:.2f} m³")
+        spaces = data["spaces"]
+        total_volume = data["total_volume"]
+        output = [f"Total number of spaces with volumes: {len(spaces)}\n"]
+        for space in spaces:
+            output.append(f"Space ID: {space['id']}")
+            output.append(f"Global ID: {space['global_id']}")
+            output.append(f"Name: {space['name']}")
+            output.append(f"Volume: {space['volume']} m³")
+            output.append("-" * 50)
+        output.append(f"\nTotal number of spaces with volumes: {len(spaces)}")
+        output.append(f"Total volume of spaces: {total_volume:.2f} m³")
+        print("\n".join(output))
+        self.result_label.config(text=f"Total volume of spaces: {total_volume:.2f} m³")
