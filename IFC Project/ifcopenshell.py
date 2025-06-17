@@ -97,15 +97,24 @@ class IfcModel:
         total_area = 0.0
         for space in spaces:
             area = "N/A"
-            # Look for area in property sets
-            if hasattr(space, "IsDefinedBy"):
+            # Check Quantities for area
+            if hasattr(space, "Quantities"):
+                for prop in space.Quantities.Quantities:
+                    if prop.Name == "NetFloorArea" or prop.Name == "GrossFloorArea":
+                        area = prop.AreaValue if hasattr(prop, "AreaValue") else "N/A"
+                        print(f"Found area for space {space.id()}: {area}")
+                        if isinstance(area, (int, float)):
+                            total_area += area
+            # Fallback to property sets
+            elif hasattr(space, "IsDefinedBy"):
                 for rel in space.IsDefinedBy:
                     if rel.is_a("IfcRelDefinesByProperties"):
                         property_set = rel.RelatingPropertyDefinition
                         if property_set.is_a("IfcPropertySet"):
                             for prop in property_set.HasProperties:
-                                if prop.Name == "NetFloorArea" and hasattr(prop, "NominalValue"):
+                                if prop.Name in ["NetFloorArea", "GrossFloorArea"] and hasattr(prop, "NominalValue"):
                                     area = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
+                                    print(f"Found area in property set for space {space.id()}: {area}")
                                     if isinstance(area, (int, float)):
                                         total_area += area
             space_info = {
@@ -129,15 +138,24 @@ class IfcModel:
         total_volume = 0.0
         for space in spaces:
             volume = "N/A"
-            # Look for volume in property sets
-            if hasattr(space, "IsDefinedBy"):
+            # Check Quantities for volume
+            if hasattr(space, "Quantities"):
+                for prop in space.Quantities.Quantities:
+                    if prop.Name == "NetVolume" or prop.Name == "GrossVolume":
+                        volume = prop.VolumeValue if hasattr(prop, "VolumeValue") else "N/A"
+                        print(f"Found volume for space {space.id()}: {volume}")
+                        if isinstance(volume, (int, float)):
+                            total_volume += volume
+            # Fallback to property sets
+            elif hasattr(space, "IsDefinedBy"):
                 for rel in space.IsDefinedBy:
                     if rel.is_a("IfcRelDefinesByProperties"):
                         property_set = rel.RelatingPropertyDefinition
                         if property_set.is_a("IfcPropertySet"):
                             for prop in property_set.HasProperties:
-                                if prop.Name == "NetVolume" and hasattr(prop, "NominalValue"):
+                                if prop.Name in ["NetVolume", "GrossVolume"] and hasattr(prop, "NominalValue"):
                                     volume = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
+                                    print(f"Found volume in property set for space {space.id()}: {volume}")
                                     if isinstance(volume, (int, float)):
                                         total_volume += volume
             space_info = {
@@ -408,4 +426,5 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
+    main()
     main()
