@@ -97,26 +97,16 @@ class IfcModel:
         total_area = 0.0
         for space in spaces:
             area = "N/A"
-            # Look for area in property sets
-            if hasattr(space, "Quantities"):
-                for prop in space.Quantities.Quantities:
-                    if prop.Name == "NetFloorArea" or prop.Name == "GrossFloorArea":
-                        area = prop.AreaValue if hasattr(prop, "AreaValue") else "N/A"
-                        print(f"Found area for space {space.id()}: {area}")
-                        if isinstance(area, (int, float)):
-                            total_area += area
-            # Fallback to property sets
-            elif hasattr(space, "IsDefinedBy"):
-                for rel in space.IsDefinedBy:
-                    if rel.is_a("IfcRelDefinesByProperties"):
-                        property_set = rel.RelatingPropertyDefinition
-                        if property_set.is_a("IfcPropertySet"):
-                            for prop in property_set.HasProperties:
-                                if prop.Name in ["NetFloorArea", "GrossFloorArea"] and hasattr(prop, "NominalValue"):
-                                    area = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
-                                    print(f"Found area in property set for space {space.id()}: {area}")
-                                    if isinstance(area, (int, float)):
-                                        total_area += area
+            for rel in space.IsDefinedBy:
+                if rel.is_a("IfcRelDefinesByProperties"):
+                    prop_def = rel.RelatingPropertyDefinition
+                    if prop_def.is_a("IfcElementQuantity"):
+                        for quantity in prop_def.Quantities:
+                            if quantity.is_a("IfcQuantityArea") and quantity.Name == "NetFloorArea":
+                                area = quantity.AreaValue
+                                print(f"Found area for space {space.id()}: {area}")
+                                if isinstance(area, (int, float)):
+                                    total_area += area
             space_info = {
                 "id": space.id(),
                 "global_id": space.GlobalId,
@@ -138,26 +128,16 @@ class IfcModel:
         total_volume = 0.0
         for space in spaces:
             volume = "N/A"
-            # Check Quantities for volume
-            if hasattr(space, "Quantities"):
-                for prop in space.Quantities.Quantities:
-                    if prop.Name == "NetVolume" or prop.Name == "GrossVolume":
-                        volume = prop.VolumeValue if hasattr(prop, "VolumeValue") else "N/A"
-                        print(f"Found volume for space {space.id()}: {volume}")
-                        if isinstance(volume, (int, float)):
-                            total_volume += volume
-            # Fallback to property sets
-            elif hasattr(space, "IsDefinedBy"):
-                for rel in space.IsDefinedBy:
-                    if rel.is_a("IfcRelDefinesByProperties"):
-                        property_set = rel.RelatingPropertyDefinition
-                        if property_set.is_a("IfcPropertySet"):
-                            for prop in property_set.HasProperties:
-                                if prop.Name in ["NetVolume", "GrossVolume"] and hasattr(prop, "NominalValue"):
-                                    volume = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
-                                    print(f"Found volume in property set for space {space.id()}: {volume}")
-                                    if isinstance(volume, (int, float)):
-                                        total_volume += volume
+            for rel in space.IsDefinedBy:
+                if rel.is_a("IfcRelDefinesByProperties"):
+                    prop_def = rel.RelatingPropertyDefinition
+                    if prop_def.is_a("IfcElementQuantity"):
+                        for quantity in prop_def.Quantities:
+                            if quantity.is_a("IfcQuantityVolume") and quantity.Name == "NetVolume":
+                                volume = quantity.VolumeValue
+                                print(f"Found volume for space {space.id()}: {volume}")
+                                if isinstance(volume, (int, float)):
+                                    total_volume += volume
             space_info = {
                 "id": space.id(),
                 "global_id": space.GlobalId,
