@@ -126,35 +126,29 @@ class IfcModel:
         spaces = ifc_file.by_type("IfcSpace")
         print(f"Number of spaces: {len(spaces)}")
         space_data = []
+        total_volume = 0.0
         for space in spaces:
-            area = "N/A"
-            height = "N/A"
             volume = "N/A"
-            # Look for area and height in property sets
+            # Look for volume in property sets
             if hasattr(space, "IsDefinedBy"):
                 for rel in space.IsDefinedBy:
                     if rel.is_a("IfcRelDefinesByProperties"):
                         property_set = rel.RelatingPropertyDefinition
                         if property_set.is_a("IfcPropertySet"):
                             for prop in property_set.HasProperties:
-                                if prop.Name == "NetFloorArea" and hasattr(prop, "NominalValue"):
-                                    area = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
-                                if prop.Name == "Height" and hasattr(prop, "NominalValue"):
-                                    height = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
-            # Calculate volume if both area and height are available
-            if isinstance(area, (int, float)) and isinstance(height, (int, float)):
-                volume = area * height
+                                if prop.Name == "NetVolume" and hasattr(prop, "NominalValue"):
+                                    volume = prop.NominalValue.wrappedValue if prop.NominalValue else "N/A"
+                                    if isinstance(volume, (int, float)):
+                                        total_volume += volume
             space_info = {
                 "id": space.id(),
                 "global_id": space.GlobalId,
                 "name": space.Name if space.Name else "Unnamed",
-                "area": area,
-                "height": height,
                 "volume": volume
             }
             print(f"Space Volume: {space_info}")
             space_data.append(space_info)
-        return space_data
+        return {"spaces": space_data, "total_volume": total_volume}
 
 # View
 class IfcView:
@@ -311,9 +305,9 @@ class IfcView:
             return
         self.result_label.config(text=f"Total number of windows: {len(windows)}")
 
-    def display_space_areas(self, spaces):
+    def display_space_areas(self, data):
         """Display number of spaces with areas in the main window and console."""
-        if spaces is None:
+        if data is None or "spaces" not in data:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
         spaces = data["spaces"]
@@ -328,25 +322,26 @@ class IfcView:
         output.append(f"\nTotal number of spaces with areas: {len(spaces)}")
         output.append(f"Total area of spaces: {total_area:.2f} m²")
         print("\n".join(output))
-        self.result_label.config(text=f"Total number of spaces with areas: {len(spaces)}")
+        self.result_label.config(text=f"Total area of spaces: {total_area:.2f} m²")
     
-    def display_space_volumes(self, spaces):
+    def display_space_volumes(self, data):
         """Display number of spaces with volumes in the main window and console."""
-        if spaces is None:
+        if data is None or "spaces" not in data:
             self.result_label.config(text="No file selected or file could not be opened.")
             return
+        spaces = data["spaces"]
+        total_volume = data["total_volume"]
         output = [f"Total number of spaces with volumes: {len(spaces)}\n"]
         for space in spaces:
             output.append(f"Space ID: {space['id']}")
             output.append(f"Global ID: {space['global_id']}")
             output.append(f"Name: {space['name']}")
-            output.append(f"Area: {space['area']} m²")
-            output.append(f"Height: {space['height']} m")
             output.append(f"Volume: {space['volume']} m³")
             output.append("-" * 50)
         output.append(f"\nTotal number of spaces with volumes: {len(spaces)}")
+        output.append(f"Total volume of spaces: {total_volume:.2f} m³")
         print("\n".join(output))
-        self.result_label.config(text=f"Total number of spaces with volumes: {len(spaces)}")
+        self.result_label.config(text=f"Total volume of spaces: {total_volume:.2f} m³")
 
 # Controller
 class IfcController:
