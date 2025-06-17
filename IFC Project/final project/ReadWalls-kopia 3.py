@@ -148,6 +148,24 @@ class IfcModel:
             space_data.append(space_info)
         return {"spaces": space_data, "total_volume": total_volume}
 
+    def calculate_total_window_area(self):
+        """Calculate total window glass area based on 'Steklena površina'."""
+        ifc_file = self.open_ifc_file()
+        if ifc_file is None:
+            return 0.0
+        total_area = 0.0
+        for window in ifc_file.by_type("IfcWindow"):
+            for rel in window.IsDefinedBy:
+                if rel.is_a("IfcRelDefinesByProperties"):
+                    prop_def = rel.RelatingPropertyDefinition
+                    if prop_def.is_a("IfcPropertySet"):
+                        for prop in prop_def.HasProperties:
+                            if prop.Name == "Steklena površina" and hasattr(prop, "NominalValue"):
+                                value = prop.NominalValue.wrappedValue
+                                if isinstance(value, (int, float)):
+                                    total_area += value
+        return total_area
+
 # View
 class IfcView:
     def __init__(self, root, controller):
