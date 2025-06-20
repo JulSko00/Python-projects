@@ -1,8 +1,8 @@
 import tkinter.simpledialog as simpledialog
 from tkinter import filedialog
 
+# Controller
 class IfcController:
-
     def __init__(self, model, view):
         self.model = model
         self.view = view
@@ -62,15 +62,17 @@ class IfcController:
         try:
             g_factor = float(simpledialog.askstring("Input", "Enter solar heat gain coefficient (0 to 1):"))
             if not (0 <= g_factor <= 1):
-                self.view.result_label.config(text="Solar gain coefficient must be between 0 and 1.")
+                self.view.display_solar_gain(0)  # Display error via label
+                self.view.result_labels["Calculate Solar Gain"]["label"].config(text="Solar gain coefficient must be between 0 and 1.")
                 return
             ext_temp = float(simpledialog.askstring("Input", "Enter external temperature (°C):"))
             int_temp = float(simpledialog.askstring("Input", "Enter internal temperature (°C):"))
             sun_hours = float(simpledialog.askstring("Input", "Enter daily sun exposure (hours):"))
         except Exception:
-            self.view.result_label.config(text="Invalid input.")
+            self.view.display_solar_gain(0)  # Display error via label
+            self.view.result_labels["Calculate Solar Gain"]["label"].config(text="Invalid input.")
             return
 
         total_window_area = self.model.calculate_total_window_area()
         solar_gain = total_window_area * g_factor * (int_temp - ext_temp) * sun_hours
-        self.view.result_label.config(text=f"Daily solar heat gain: {solar_gain:.2f} Wh")
+        self.view.display_solar_gain(solar_gain)
